@@ -29,5 +29,8 @@ module.exports = {
     "import/no-unresolved": 0,
     "@typescript-eslint/no-var-requires": "off",
     "@typescript-eslint/no-non-null-assertion": "off",
+    "require-jsdoc": "off",
+    "new-cap": "off",
+    "@typescript-eslint/ban-ts-comment": "off",
   },
 };
