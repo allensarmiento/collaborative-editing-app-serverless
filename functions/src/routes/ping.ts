@@ -10,6 +10,6 @@ router.get("/ping", async (req: Request, res: Response) => {
   const msg = snapshot.val();
 
   res.status(200).json({ok: true, msg});
-});;
+});
 
 export {router as pingRouter};
