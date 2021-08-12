@@ -1,8 +1,6 @@
 import express, {Request, Response} from "express";
-
-import {db} from "../../firebase";
-
 import {NotFoundError} from "../../errors/not-found-error";
+import {retrieveConversationMutations} from "../../firebase/mutations.utils";
 
 const router = express.Router();
 
@@ -10,14 +8,11 @@ router.get(
     "/mutations/:conversationId",
     async (req: Request, res: Response) => {
       const {conversationId} = req.params;
-      const ref = db.ref(`mutations/${conversationId}`);
-      const snapshot = await ref.once("value");
 
-      if (!snapshot.exists()) {
+      const mutations = await retrieveConversationMutations(conversationId);
+      if (!mutations) {
         throw new NotFoundError();
       }
-
-      const mutations = snapshot.val();
 
       res.status(200).json({ok: true, mutations});
     },

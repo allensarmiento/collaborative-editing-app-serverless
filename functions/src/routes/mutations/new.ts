@@ -1,11 +1,12 @@
 import express, {Request, Response} from "express";
 import {body} from "express-validator";
-
+import {BadRequestError} from "../../errors/bad-request-error";
 import {NotFoundError} from "../../errors/not-found-error";
-
-import {db} from "../../firebase";
-
+import {retrieveConversation, updateConversation} from "../../firebase/conversations.utils";
+import {addMutationToConversation, retrieveLastMutation} from "../../firebase/mutations.utils";
 import {validateRequest} from "../../middlewares/validate-request";
+import {Mutation, MutationManager} from "../../services/mutation-manager";
+import {TransformationManager} from "../../services/transformation-manager";
 
 const router = express.Router();
 
@@ -23,56 +24,40 @@ router.post(
     validateRequest,
     async (req: Request, res: Response) => {
       const {author, conversationId, data, origin} = req.body;
+      if (author !== "alice" && author !== "bob") {
+        throw new BadRequestError("Invalid author name");
+      }
 
-      const conversationRef = db.ref(`conversations/${conversationId}`);
-      const conversationSnapshot = await conversationRef.once("value");
-      if (!conversationSnapshot.exists()) {
+      const newMutation: Mutation = {author, data, origin};
+
+      const conversation = await retrieveConversation(conversationId);
+      if (!conversation) {
         throw new NotFoundError();
       }
 
-      const {lastMutation} = conversationSnapshot.val();
-      if (lastMutation &&
-          (origin["alice"] !== lastMutation.origin["alice"] ||
-          origin["bob"] !== lastMutation.origin["bob"])) {
-        let offBy = 0;
-        offBy += Math.abs(origin["alice"] - lastMutation.origin["alice"]);
-        offBy += Math.abs(origin["bob"] - lastMutation.origin["bob"]);
+      const lastMutation = await retrieveLastMutation(conversationId);
+      if (lastMutation) {
+        const offBy: number = TransformationManager.calculateOffBy(lastMutation, newMutation);
 
         if (offBy > 1) {
-          // TODO: Bad request error!!!
-        }
-
-        origin["alice"] = lastMutation.origin["alice"];
-        origin["bob"] = lastMutation.origin["bob"];
-
-        if (lastMutation.data.type === "insert") {
-          if (lastMutation.data.index <= data.index) {
-            data.index += lastMutation.data.text.length;
-          }
-        } else if (lastMutation.data.type === "delete") {
-          if (lastMutation.data.index < data.index) {
-            data.index -= lastMutation.data.length;
-          }
+          throw new BadRequestError(
+              "Cannot handle version of document off by more than 1",
+          );
+        } else if (offBy === 1) {
+          TransformationManager.transform(lastMutation, newMutation);
         }
       }
 
-      const newMutation = {author, data, origin};
-      const mutationsRef = db.ref(`mutations/${conversationId}`);
-      mutationsRef.push(newMutation);
-      newMutation.origin[author] += 1;
-      let mutatedText = "";
-      const {text} = conversationSnapshot.val();
-
-      if (data.type === "insert") {
-        mutatedText = text.slice(0, data.index) +
-            data.text +
-            text.slice(data.index);
-      } else if (data.type === "delete") {
-        mutatedText = text.slice(0, data.index) +
-            text.slice(data.index + data.length);
+      if (author === "alice") {
+        newMutation.origin.alice += 1;
+      } else if (author === "bob") {
+        newMutation.origin.bob += 1;
       }
 
-      conversationRef.update({text: mutatedText, lastMutation: newMutation});
+      addMutationToConversation(conversationId, newMutation);
+      
+      const mutatedText = MutationManager.mutate(conversation.text, newMutation);
+      updateConversation(conversationId, mutatedText);
 
       res.status(201).json({ok: true, text: mutatedText});
     },

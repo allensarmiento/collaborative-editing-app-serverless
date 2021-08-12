@@ -8,6 +8,8 @@ import {NotFoundError} from "./errors/not-found-error";
 import {errorHandler} from "./middlewares/error-handler";
 
 import {infoRouter} from "./routes/info";
+import {deleteConversationRouter} from "./routes/conversations/delete";
+import {listConversationsRouter} from "./routes/conversations/list";
 import {newConversationRouter} from "./routes/conversations/new";
 import {listMutationsRouter} from "./routes/mutations/list";
 import {newMutationRouter} from "./routes/mutations/new";
@@ -20,13 +22,11 @@ app.use(json());
 
 app.use(pingRouter);
 app.use(infoRouter);
+app.use(listConversationsRouter);
 app.use(newConversationRouter);
+app.use(deleteConversationRouter);
 app.use(listMutationsRouter);
 app.use(newMutationRouter);
-
-// app.get("/conversations", async (req: Request, res: Response) => {});
-
-// app.delete("/conversations", async (req: Request, res: Response) => {});
 
 app.all("*", async () => {
   throw new NotFoundError();
