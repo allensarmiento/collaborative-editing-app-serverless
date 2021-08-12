@@ -30,21 +30,49 @@ router.post(
         throw new NotFoundError();
       }
 
+      const {lastMutation} = conversationSnapshot.val();
+      if (lastMutation &&
+          (origin["alice"] !== lastMutation.origin["alice"] ||
+          origin["bob"] !== lastMutation.origin["bob"])) {
+        let offBy = 0;
+        offBy += Math.abs(origin["alice"] - lastMutation.origin["alice"]);
+        offBy += Math.abs(origin["bob"] - lastMutation.origin["bob"]);
+
+        if (offBy > 1) {
+          // TODO: Bad request error!!!
+        }
+
+        origin["alice"] = lastMutation.origin["alice"];
+        origin["bob"] = lastMutation.origin["bob"];
+
+        if (lastMutation.data.type === "insert") {
+          if (lastMutation.data.index <= data.index) {
+            data.index += lastMutation.data.text.length;
+          }
+        } else if (lastMutation.data.type === "delete") {
+          if (lastMutation.data.index < data.index) {
+            data.index -= lastMutation.data.length;
+          }
+        }
+      }
+
       const newMutation = {author, data, origin};
+      const mutationsRef = db.ref(`mutations/${conversationId}`);
+      mutationsRef.push(newMutation);
       newMutation.origin[author] += 1;
       let mutatedText = "";
+      const {text} = conversationSnapshot.val();
 
       if (data.type === "insert") {
-        const mutationsRef = db.ref(`mutations/${conversationId}`);
-        mutationsRef.push(newMutation);
-
-        const conversation = conversationSnapshot.val();
-        mutatedText = conversation.text.slice(0, data.index) +
+        mutatedText = text.slice(0, data.index) +
             data.text +
-            conversation.text.slice(data.index);
-
-        conversationRef.update({text: mutatedText, lastMutation: newMutation});
+            text.slice(data.index);
+      } else if (data.type === "delete") {
+        mutatedText = text.slice(0, data.index) +
+            text.slice(data.index + data.length);
       }
+
+      conversationRef.update({text: mutatedText, lastMutation: newMutation});
 
       res.status(201).json({ok: true, text: mutatedText});
     },

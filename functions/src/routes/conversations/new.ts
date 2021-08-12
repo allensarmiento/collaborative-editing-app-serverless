@@ -17,7 +17,7 @@ router.post(
       const {text} = req.body;
 
       const conversationsRef = db.ref("conversations");
-      conversationsRef.push({text, original: text});
+      conversationsRef.push({text});
 
       res.status(200).json({ok: true});
     },
