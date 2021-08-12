@@ -1,26 +1,15 @@
 import express, {Request, Response} from "express";
-import {body} from "express-validator";
 
 import {db} from "../../firebase";
 
 import {NotFoundError} from "../../errors/not-found-error";
 
-import {validateRequest} from "../../middlewares/validate-request";
-
 const router = express.Router();
 
 router.get(
-    "/mutations",
-    [
-      body("conversationId")
-          .not()
-          .isEmpty()
-          .withMessage("Conversation id is required"),
-    ],
-    validateRequest,
+    "/mutations/:conversationId",
     async (req: Request, res: Response) => {
-      const {conversationId} = req.body;
-
+      const {conversationId} = req.params;
       const ref = db.ref(`mutations/${conversationId}`);
       const snapshot = await ref.once("value");
 
