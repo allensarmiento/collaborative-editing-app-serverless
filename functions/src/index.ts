@@ -3,40 +3,62 @@ import cors from "cors";
 import express, {Request, Response} from "express";
 import "express-async-errors";
 import * as functions from "firebase-functions";
-import * as admin from "firebase-admin";
 
-const serviceAccount = require("../service-account.json");
+import {db} from "./firebase";
 
-const adminConfig = JSON.parse(process.env.FIREBASE_CONFIG!);
-adminConfig.credential = admin.credential.cert(serviceAccount);
-admin.initializeApp(adminConfig);
+import {NotFoundError} from "./errors/not-found-error";
+
+import {errorHandler} from "./middlewares/error-handler";
+
+import {infoRouter} from "./routes/info";
+import {listMutationsRouter} from "./routes/mutations/list";
+import {pingRouter} from "./routes/ping";
 
 const app = express();
-const db = admin.database();
 
 app.use(cors({origin: true}));
 app.use(json());
 
-app.get("/ping", async (req: Request, res: Response) => {
-  const ref = db.ref("ping");
-  const snapshot = await ref.once("value");
-  const msg = snapshot.val();
+app.use(pingRouter);
+app.use(infoRouter);
+app.use(listMutationsRouter);
 
-  res.status(200).json({ok: true, msg});
+app.post("/mutations", async (req: Request, res: Response) => {
+  const {author, conversationId, data, origin} = req.body;
+
+  const mutationsRef = db.ref(`mutations/${conversationId}`);
+  const mutationsSnapshot = await mutationsRef.once("value");
+
+  if (!mutationsSnapshot.exists()) {
+    // Throw error here
+  }
+
+  const conversationsRef = db.ref(`conversations/${conversationId}`);
+  const conversationSnapshot = await conversationsRef.once("value");
+
+  if (!conversationSnapshot.exists()) {
+    // Throw error here
+  }
+
+  const lastMutation = {author, data, origin};
+
+  mutationsRef.push(lastMutation);
+  conversationsRef.update({lastMutation});
+
+  let text = conversationSnapshot.val().text;
+  text = text.slice(0, data.index) + data.text + text.slice(data.index);
+
+  res.status(200).json({ok: true, text});
 });
 
-app.get("/info", async (req: Request, res: Response) => {
-  const ref = db.ref("info");
-  const snapshot = await ref.once("value");
-  const info = snapshot.val();
+// app.get("/conversations", async (req: Request, res: Response) => {});
 
-  res.status(200).json({ok: true, ...info});
+// app.delete("/conversations", async (req: Request, res: Response) => {});
+
+app.all("*", async () => {
+  throw new NotFoundError();
 });
 
-app.post('/mutations', async (req: Request, res: Response) => {});
-
-app.get('/conversations', async (req: Request, res: Response) => {});
-
-app.delete('/conversations', async (req: Request, res: Response) => {});
+app.use(errorHandler);
 
 export const widgets = functions.https.onRequest(app);
