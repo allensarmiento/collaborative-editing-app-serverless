@@ -8,6 +8,7 @@ import {
 } from "../../firebase/conversations.utils";
 import {
   addMutationToConversation,
+  retrieveConversationMutations,
   retrieveLastMutation,
 } from "../../firebase/mutations.utils";
 import { validateRequest } from "../../middlewares/validate-request";
@@ -47,9 +48,26 @@ router.post(
             .calculateOffBy(lastMutation, newMutation);
 
         if (offBy > 1) {
-          throw new BadRequestError(
-              "Cannot handle version of document off by more than 1",
-          );
+          // TODO: Needs to be thoroughly tested if is a decent solution
+          // Approach: Go back and redo the mutations until we are up to date
+          const mutations: Mutation[] | null =
+            await retrieveConversationMutations(conversationId);
+
+          if (mutations) {
+            let mutateIndex: number = mutations.length - 1;
+            while (mutateIndex >= 0) {
+              if (newMutation.origin.alice === mutations[mutateIndex].origin.alice && newMutation.origin.bob === mutations[mutateIndex].origin.bob) {
+                break;
+              }
+              mutateIndex--;
+            }
+
+            for (let i = mutateIndex + 1; i < mutations.length; i++) {
+              TransformationManager.transform(mutations[i], newMutation);
+            }
+
+            TransformationManager.transform(lastMutation, newMutation);
+          }
         } else if (offBy === 1) {
           TransformationManager.transform(lastMutation, newMutation);
         }

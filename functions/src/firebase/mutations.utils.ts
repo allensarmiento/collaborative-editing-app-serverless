@@ -10,7 +10,20 @@ export const retrieveConversationMutations =
       return null;
     }
 
-    return mutationsSnapshot.val();
+    const mutationKeys = Object.keys(mutationsSnapshot.val());
+    const mutations: Mutation[] = [];
+
+    mutationKeys.map((mutationId) => {
+      const currentMutation = mutationsSnapshot.val()[mutationId];
+      const mutation: Mutation = {
+        author: currentMutation.author,
+        data: { ...currentMutation.data },
+        origin: { ...currentMutation.origin },
+      };
+      mutations.push(mutation);
+    });
+
+    return mutations;
   };
 
 export const retrieveLastMutation =
