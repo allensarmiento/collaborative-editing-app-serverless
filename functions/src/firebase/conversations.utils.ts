@@ -3,8 +3,8 @@ import {
   conversationsRef,
   mutationConversationRef,
 } from "./firebase";
-import {retrieveLastMutation} from "./mutations.utils";
-import {Mutation} from "../services/mutation-manager";
+import { retrieveLastMutation } from "./mutations.utils";
+import { Mutation } from "../services/mutation-manager";
 
 export interface Conversation {
   id: string;
@@ -29,7 +29,7 @@ export const retrieveConversations = async (): Promise<Conversation[]> => {
     });
   });
 
-  for (let conversation of conversations) {
+  for (const conversation of conversations) {
     conversation.lastMutation = await retrieveLastMutation(conversation.id);
   }
 
@@ -38,8 +38,9 @@ export const retrieveConversations = async (): Promise<Conversation[]> => {
 
 export const retrieveConversation =
   async (conversationId: string): Promise<Conversation | null> => {
-    const conversationSnapshot = await conversationRef(conversationId).once("value");
-    
+    const conversationSnapshot = await conversationRef(conversationId)
+        .once("value");
+
     if (!conversationSnapshot.exists()) {
       return null;
     }
@@ -48,9 +49,10 @@ export const retrieveConversation =
   };
 
 export const addConversation = (text: string): void => {
-  conversationsRef().push({text});
+  conversationsRef().push({ text });
 };
 
-export const updateConversation = (conversationId: string, text: string) => {
-  conversationRef(conversationId).update({text});
-};
+export const updateConversation =
+  (conversationId: string, text: string): void => {
+    conversationRef(conversationId).update({ text });
+  };

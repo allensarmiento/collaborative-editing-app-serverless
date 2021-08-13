@@ -1,4 +1,4 @@
-import {Mutation} from "./mutation-manager";
+import { Mutation } from "./mutation-manager";
 
 export class TransformationManager {
   static transform(lastMutation: Mutation, newMutation: Mutation): void {

@@ -1,6 +1,6 @@
-import {NextFunction, Request, Response} from "express";
+import { NextFunction, Request, Response } from "express";
 
-import {CustomError} from "../errors/custom-error";
+import { CustomError } from "../errors/custom-error";
 
 export const errorHandler = (
     err: Error,
@@ -9,13 +9,13 @@ export const errorHandler = (
     next: NextFunction, // eslint-disable-line
 ): void => {
   if (err instanceof CustomError) {
-    res.status(err.statusCode).send({errors: err.serializeErrors()});
+    res.status(err.statusCode).send({ errors: err.serializeErrors() });
     return;
   }
 
   console.error(err);
 
   res.status(400).send({
-    errors: [{message: "Something went wrong"}],
+    errors: [ { message: "Something went wrong" } ],
   });
 };

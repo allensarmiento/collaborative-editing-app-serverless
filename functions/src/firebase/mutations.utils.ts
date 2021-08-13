@@ -1,10 +1,10 @@
-import {mutationRef, mutationConversationRef} from "./firebase";
-import {Mutation} from "../services/mutation-manager";
+import { mutationRef, mutationConversationRef } from "./firebase";
+import { Mutation } from "../services/mutation-manager";
 
 export const retrieveConversationMutations =
   async (conversationId: string): Promise<Mutation[] | null> => {
     const mutationsSnapshot = await mutationConversationRef(conversationId)
-      .once("value");
+        .once("value");
 
     if (!mutationsSnapshot.exists()) {
       return null;
@@ -16,8 +16,8 @@ export const retrieveConversationMutations =
 export const retrieveLastMutation =
   async (conversationId: string): Promise<Mutation | null> => {
     const mutationSnapshot = await mutationConversationRef(conversationId)
-      .limitToLast(1)
-      .once("value");
+        .limitToLast(1)
+        .once("value");
 
     if (!mutationSnapshot.exists()) {
       return null;
@@ -25,12 +25,12 @@ export const retrieveLastMutation =
 
     const lastMutationKey = Object.keys(mutationSnapshot.val())[0];
     const lastSnapshot = await mutationRef(conversationId, lastMutationKey)
-      .once("value");
-    
+        .once("value");
+
     return lastSnapshot.val();
   };
 
 export const addMutationToConversation =
-  (conversationId: string, mutation: Mutation) => {
+  (conversationId: string, mutation: Mutation): void => {
     mutationConversationRef(conversationId).push(mutation);
   };

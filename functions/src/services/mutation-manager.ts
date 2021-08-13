@@ -14,7 +14,7 @@ export interface Mutation {
 
 export class MutationManager {
   static mutate(current: string, mutation: Mutation): string {
-    const {data: {type, index, length, text}} = mutation;
+    const { data: { type, index, length, text } } = mutation;
 
     if (type === "insert" && text !== undefined) {
       return this.insert(current, index, text);
