@@ -11,6 +11,7 @@ import { infoRouter } from "./routes/info";
 import { deleteConversationRouter } from "./routes/conversations/delete";
 import { listConversationsRouter } from "./routes/conversations/list";
 import { newConversationRouter } from "./routes/conversations/new";
+import { showConversationRouter } from "./routes/conversations/show";
 import { listMutationsRouter } from "./routes/mutations/list";
 import { newMutationRouter } from "./routes/mutations/new";
 import { pingRouter } from "./routes/ping";
@@ -25,6 +26,7 @@ app.use(infoRouter);
 app.use(listConversationsRouter);
 app.use(newConversationRouter);
 app.use(deleteConversationRouter);
+app.use(showConversationRouter);
 app.use(listMutationsRouter);
 app.use(newMutationRouter);
 

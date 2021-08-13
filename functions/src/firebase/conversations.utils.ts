@@ -45,11 +45,20 @@ export const retrieveConversation =
       return null;
     }
 
-    return conversationSnapshot.val();
+    return {
+      id: conversationSnapshot.key!,
+      text: conversationSnapshot.val(),
+    };
   };
 
-export const addConversation = (text: string): void => {
-  conversationsRef().push({ text });
+export const addConversation = (text: string): Conversation => {
+  const newConversationRef = conversationsRef().push({ text });
+  const newConversationKey = newConversationRef.key;
+
+  return {
+    id: newConversationKey!,
+    text,
+  };
 };
 
 export const updateConversation =

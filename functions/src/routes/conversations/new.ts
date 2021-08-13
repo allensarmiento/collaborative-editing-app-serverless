@@ -1,6 +1,9 @@
 import express, { Request, Response } from "express";
 import { body } from "express-validator";
-import { addConversation } from "../../firebase/conversations.utils";
+import {
+  addConversation,
+  Conversation,
+} from "../../firebase/conversations.utils";
 import { validateRequest } from "../../middlewares/validate-request";
 
 const router = express.Router();
@@ -14,9 +17,9 @@ router.post(
     async (req: Request, res: Response) => {
       const { text } = req.body;
 
-      addConversation(text);
+      const newConversation: Conversation = addConversation(text);
 
-      res.status(200).json({ ok: true });
+      res.status(200).json({ ok: true, newConversation });
     },
 );
 
