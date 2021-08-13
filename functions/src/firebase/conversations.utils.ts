@@ -47,7 +47,7 @@ export const retrieveConversation =
 
     return {
       id: conversationSnapshot.key!,
-      text: conversationSnapshot.val(),
+      text: conversationSnapshot.val().text,
     };
   };
 
