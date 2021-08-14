@@ -43,7 +43,7 @@ export const retrieveLastMutation =
     return lastSnapshot.val();
   };
 
-export const addMutationToConversation =
-  (conversationId: string, mutation: Mutation): void => {
-    mutationConversationRef(conversationId).push(mutation);
-  };
+export const addMutationToConversation = ({ conversationId, mutation }: {
+    conversationId: string, mutation: Mutation }): void => {
+  mutationConversationRef(conversationId).push(mutation);
+};

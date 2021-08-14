@@ -1,12 +1,9 @@
 import * as admin from "firebase-admin";
-// const serviceAccount = require("../../service-account.json");
+const serviceAccount = require("../../service-account.json");
 
-// const adminConfig = JSON.parse(process.env.FIREBASE_CONFIG!);
-// adminConfig.credential = admin.credential.cert(serviceAccount);
-// admin.initializeApp(adminConfig);
-admin.initializeApp({
-  databaseURL: "https://collaborative-editing-system-default-rtdb.firebaseio.com",
-});
+const adminConfig = JSON.parse(process.env.FIREBASE_CONFIG!);
+adminConfig.credential = admin.credential.cert(serviceAccount);
+admin.initializeApp(adminConfig);
 
 export const db = admin.database();
 
@@ -26,6 +23,3 @@ export const mutationConversationRef =
 export const mutationRef =
   (conversationId: string, mutationId: string): admin.database.Reference =>
     db.ref(`mutations/${conversationId}/${mutationId}`);
-
-export const conversationsRefWithId =
-  (id: string): admin.database.Reference => db.ref(`conversations/${id}`);
