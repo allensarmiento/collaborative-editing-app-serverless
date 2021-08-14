@@ -18,8 +18,35 @@ import { pingRouter } from "./routes/ping";
 
 const app = express();
 
+// const whitelist = [
+//   "https://app.ava.me",
+//   "https://collaborative-editing-app.herokuapp.com",
+//   "https://us-central1-collaborative-editing-system.cloudfunctions.net/",
+//   "https://cloudfunctions.net/",
+// ];
+// const corsOptions = {
+//   allowedHeaders: [
+//     "Origin",
+//     "X-Requested-With",
+//     "Content-Type",
+//     "Accept",
+//   ],
+//   methods: [ "GET", "PUT", "POST", "DELETE" ],
+//   // @ts-ignore
+//   origin: (origin, callback) => {
+//     if (whitelist.indexOf(origin) !== -1) {
+//       callback(null, true);
+//     } else {
+//       callback(new Error("Not allowed by CORS"));
+//     }
+//   },
+// };
 app.use(cors({ origin: true }));
 app.use(json());
+
+app.get("/", (req, res) => {
+  res.status(200).json({ ok: true });
+});
 
 app.use(pingRouter);
 app.use(infoRouter);

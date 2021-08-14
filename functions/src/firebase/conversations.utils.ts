@@ -1,6 +1,7 @@
 import {
   conversationRef,
   conversationsRef,
+  conversationsRefWithId,
   mutationConversationRef,
 } from "./firebase";
 import { retrieveLastMutation } from "./mutations.utils";
@@ -65,3 +66,12 @@ export const updateConversation =
   (conversationId: string, text: string): void => {
     conversationRef(conversationId).update({ text });
   };
+
+export const addConversationWithId = (
+    text: string,
+    id: string,
+): Conversation => {
+  conversationsRefWithId(id).set({ text });
+
+  return { id, text };
+};

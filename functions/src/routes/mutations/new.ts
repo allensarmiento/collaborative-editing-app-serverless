@@ -1,8 +1,8 @@
 import express, { Request, Response } from "express";
 import { body } from "express-validator";
 import { BadRequestError } from "../../errors/bad-request-error";
-import { NotFoundError } from "../../errors/not-found-error";
 import {
+  addConversationWithId,
   retrieveConversation,
   updateConversation,
 } from "../../firebase/conversations.utils";
@@ -39,7 +39,9 @@ router.post(
 
       const conversation = await retrieveConversation(conversationId);
       if (!conversation) {
-        throw new NotFoundError();
+        addConversationWithId(data.text, conversationId);
+        res.status(201).json({ ok: true, text: data.text });
+        return;
       }
 
       const lastMutation = await retrieveLastMutation(conversationId);
@@ -56,7 +58,10 @@ router.post(
           if (mutations) {
             let mutateIndex: number = mutations.length - 1;
             while (mutateIndex >= 0) {
-              if (newMutation.origin.alice === mutations[mutateIndex].origin.alice && newMutation.origin.bob === mutations[mutateIndex].origin.bob) {
+              const newOrigin = newMutation.origin;
+              const currentOrigin = mutations[mutateIndex].origin;
+              if (newOrigin.alice === currentOrigin.alice &&
+                  newOrigin.bob === currentOrigin.bob) {
                 break;
               }
               mutateIndex--;
