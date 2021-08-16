@@ -2,12 +2,12 @@ import { mutationRef, mutationConversationRef } from "./firebase";
 import { Mutation } from "../services/mutation-manager";
 
 export const retrieveConversationMutations =
-  async (conversationId: string): Promise<Mutation[] | null> => {
+  async (conversationId: string): Promise<Mutation[]> => {
     const mutationsSnapshot = await mutationConversationRef(conversationId)
         .once("value");
 
     if (!mutationsSnapshot.exists()) {
-      return null;
+      return [];
     }
 
     const mutationKeys = Object.keys(mutationsSnapshot.val());
@@ -43,7 +43,7 @@ export const retrieveLastMutation =
     return lastSnapshot.val();
   };
 
-export const addMutationToConversation =
-  (conversationId: string, mutation: Mutation): void => {
-    mutationConversationRef(conversationId).push(mutation);
-  };
+export const addMutationToConversation = ({ conversationId, mutation }: {
+    conversationId: string, mutation: Mutation }): void => {
+  mutationConversationRef(conversationId).push(mutation);
+};

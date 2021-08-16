@@ -1,12 +1,9 @@
 import { json } from "body-parser";
 import cors from "cors";
-import express from "express";
+import express, { Request, Response } from "express";
 import "express-async-errors";
-
 import { NotFoundError } from "./errors/not-found-error";
-
 import { errorHandler } from "./middlewares/error-handler";
-
 import { infoRouter } from "./routes/info";
 import { deleteConversationRouter } from "./routes/conversations/delete";
 import { listConversationsRouter } from "./routes/conversations/list";
@@ -17,9 +14,12 @@ import { newMutationRouter } from "./routes/mutations/new";
 import { pingRouter } from "./routes/ping";
 
 const app = express();
-
 app.use(cors({ origin: true }));
 app.use(json());
+
+app.get("/", (req: Request, res: Response) => {
+  res.status(200).json({ ok: true });
+});
 
 app.use(pingRouter);
 app.use(infoRouter);

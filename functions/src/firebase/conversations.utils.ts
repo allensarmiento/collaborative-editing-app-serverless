@@ -51,14 +51,18 @@ export const retrieveConversation =
     };
   };
 
-export const addConversation = (text: string): Conversation => {
+export const addConversation = (
+    text: string,
+    conversationId?: string,
+): Conversation => {
+  if (conversationId) {
+    conversationRef(conversationId).set({ text });
+    return { id: conversationId, text };
+  }
+
   const newConversationRef = conversationsRef().push({ text });
   const newConversationKey = newConversationRef.key;
-
-  return {
-    id: newConversationKey!,
-    text,
-  };
+  return { id: newConversationKey!, text };
 };
 
 export const updateConversation =

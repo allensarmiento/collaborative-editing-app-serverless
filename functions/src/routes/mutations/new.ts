@@ -1,8 +1,8 @@
 import express, { Request, Response } from "express";
 import { body } from "express-validator";
 import { BadRequestError } from "../../errors/bad-request-error";
-import { NotFoundError } from "../../errors/not-found-error";
 import {
+  addConversation,
   retrieveConversation,
   updateConversation,
 } from "../../firebase/conversations.utils";
@@ -13,7 +13,7 @@ import {
 } from "../../firebase/mutations.utils";
 import { validateRequest } from "../../middlewares/validate-request";
 import { Mutation, MutationManager } from "../../services/mutation-manager";
-import { TransformationManager } from "../../services/transformation-manager";
+import { Transformer } from "../../services/transformer";
 
 const router = express.Router();
 
@@ -39,50 +39,33 @@ router.post(
 
       const conversation = await retrieveConversation(conversationId);
       if (!conversation) {
-        throw new NotFoundError();
+        // No existing conversation should create a new one and exit
+        // immediately.
+        const newConversation = addConversation(data.text, conversationId);
+        res.status(201).json({ ok: true, text: newConversation.text });
+        return;
       }
 
       const lastMutation = await retrieveLastMutation(conversationId);
-      if (lastMutation) {
-        const offBy: number = TransformationManager
-            .calculateOffBy(lastMutation, newMutation);
-
-        if (offBy > 1) {
-          // TODO: Needs to be thoroughly tested if is a decent solution
-          // Approach: Go back and redo the mutations until we are up to date
-          const mutations: Mutation[] | null =
-            await retrieveConversationMutations(conversationId);
-
-          if (mutations) {
-            let mutateIndex: number = mutations.length - 1;
-            while (mutateIndex >= 0) {
-              if (newMutation.origin.alice === mutations[mutateIndex].origin.alice && newMutation.origin.bob === mutations[mutateIndex].origin.bob) {
-                break;
-              }
-              mutateIndex--;
-            }
-
-            for (let i = mutateIndex + 1; i < mutations.length; i++) {
-              TransformationManager.transform(mutations[i], newMutation);
-            }
-
-            TransformationManager.transform(lastMutation, newMutation);
-          }
-        } else if (offBy === 1) {
-          TransformationManager.transform(lastMutation, newMutation);
-        }
+      const isSameOrigin = Transformer
+          .isSameOrigin({ prev: lastMutation, next: newMutation });
+      const isDifferentDirection = Transformer
+          .isDifferentDirection({ prev: lastMutation, next: newMutation });
+      if (isSameOrigin && !isDifferentDirection) {
+        throw new BadRequestError(
+            "Attempting to modify the same document twice");
       }
 
-      if (author === "alice") {
-        newMutation.origin.alice += 1;
-      } else if (author === "bob") {
-        newMutation.origin.bob += 1;
-      }
+      const mutationStack: Mutation[] =
+          await retrieveConversationMutations(conversationId);
 
-      addMutationToConversation(conversationId, newMutation);
+      MutationManager.attemptTransformations({ newMutation, mutationStack });
+
+      addMutationToConversation({ conversationId, mutation: newMutation });
 
       const mutatedText = MutationManager
           .mutate(conversation.text, newMutation);
+
       updateConversation(conversationId, mutatedText);
 
       res.status(201).json({ ok: true, text: mutatedText });
