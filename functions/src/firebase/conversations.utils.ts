@@ -52,8 +52,8 @@ export const retrieveConversation =
   };
 
 export const addConversation = (
-  text: string,
-  conversationId?: string,
+    text: string,
+    conversationId?: string,
 ): Conversation => {
   if (conversationId) {
     conversationRef(conversationId).set({ text });

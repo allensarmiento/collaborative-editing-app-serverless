@@ -1,9 +1,10 @@
 import * as admin from "firebase-admin";
-const serviceAccount = require("../../service-account.json");
+import "firebase-functions";
 
-const adminConfig = JSON.parse(process.env.FIREBASE_CONFIG!);
-adminConfig.credential = admin.credential.cert(serviceAccount);
-admin.initializeApp(adminConfig);
+// admin.initializeApp();
+admin.initializeApp({
+  databaseURL: "",
+});
 
 export const db = admin.database();
 

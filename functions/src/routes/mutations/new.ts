@@ -8,11 +8,12 @@ import {
 } from "../../firebase/conversations.utils";
 import {
   addMutationToConversation,
+  retrieveConversationMutations,
   retrieveLastMutation,
 } from "../../firebase/mutations.utils";
 import { validateRequest } from "../../middlewares/validate-request";
 import { Mutation, MutationManager } from "../../services/mutation-manager";
-import { Transformer } from "../../services/transformation-manager";
+import { Transformer } from "../../services/transformer";
 
 const router = express.Router();
 
@@ -46,37 +47,24 @@ router.post(
       }
 
       const lastMutation = await retrieveLastMutation(conversationId);
-      if (lastMutation) {
-        const originDifference =
-          Math.abs(lastMutation.origin.alice - newMutation.origin.alice) +
-          Math.abs(lastMutation.origin.bob - newMutation.origin.bob);
-
-        if (originDifference > 1) {
-          throw new BadRequestError("Invalid origin");
-        }
-
-        if (originDifference < 0) {
-          throw new BadRequestError("Attempting to write to old document");
-        }
-      }
-
       const isSameOrigin = Transformer
-        .isSameOrigin({ prev: lastMutation, next: newMutation })
+          .isSameOrigin({ prev: lastMutation, next: newMutation });
       const isDifferentDirection = Transformer
-        .isDifferentDirection({ prev: lastMutation, next: newMutation });
-
+          .isDifferentDirection({ prev: lastMutation, next: newMutation });
       if (isSameOrigin && !isDifferentDirection) {
         throw new BadRequestError(
-          "Attempting to modify the same document twice");
+            "Attempting to modify the same document twice");
       }
 
-      if (isSameOrigin) {
-        Transformer.performTransform({ prev: lastMutation, next: newMutation });
-      }
+      const mutationStack: Mutation[] =
+          await retrieveConversationMutations(conversationId);
+
+      MutationManager.attemptTransformations({ newMutation, mutationStack });
 
       addMutationToConversation({ conversationId, mutation: newMutation });
 
-      const mutatedText = MutationManager.mutate(conversation.text, newMutation);
+      const mutatedText = MutationManager
+          .mutate(conversation.text, newMutation);
 
       updateConversation(conversationId, mutatedText);
 

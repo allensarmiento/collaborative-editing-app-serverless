@@ -44,7 +44,7 @@ export class Transformer {
     if (prev.data.index <= next.data.index) {
       next.data.index += prev.data.text!.length;
     }
-  };
+  }
 
   // Same logic as insert insert.
   static transformInsertDelete({ prev, next }: {
@@ -78,7 +78,7 @@ export class Transformer {
     } else if (prev.data.index === next.data.index) {
       if (prev.data.length! < next.data.length!) {
         next.data.index += prev.data.length!;
-        next.data.length! -= prev.data.length!
+        next.data.length! -= prev.data.length!;
       } else {
         next.data.length! = 0;
       }

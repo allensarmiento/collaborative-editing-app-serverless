@@ -18,7 +18,22 @@ router.get(
       const lastMutation: Mutation | null =
         await retrieveLastMutation(conversationId);
       if (conversation) {
-        conversation.lastMutation = lastMutation;
+        if (!lastMutation) {
+          conversation.lastMutation = {
+            author: "",
+            data: {
+              index: 0,
+              text: conversation.text,
+              type: "insert",
+            },
+            origin: {
+              alice: 0,
+              bob: 0,
+            },
+          };
+        } else {
+          conversation.lastMutation = lastMutation;
+        }
       }
 
       res.status(200).json({ ok: true, conversation });
